@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "teams",
     "projects",
     "boards",
+    "tasks",
 ]
 
 MIDDLEWARE = [
