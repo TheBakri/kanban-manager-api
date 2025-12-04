@@ -33,6 +33,7 @@ urlpatterns = [
     path("api/v1/projects/", include("projects.urls")),
     path("api/v1/boards/", include("boards.urls")),
     path("api/v1/tasks/", include("tasks.urls")),
+    path("api/v1/comments/", include("comments.urls")),
 ]
 
 if settings.DEBUG:

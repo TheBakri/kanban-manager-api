@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "projects",
     "boards",
     "tasks",
+    "comments",
 ]
 
 MIDDLEWARE = [
