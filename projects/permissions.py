@@ -10,6 +10,9 @@ def _extract_project(obj):
         return obj
     if hasattr(obj, "project"):
         return obj.project
+    if hasattr(obj, "board"):
+        board = getattr(obj, "board")
+        return getattr(board, "project", None)
     return None
 
 

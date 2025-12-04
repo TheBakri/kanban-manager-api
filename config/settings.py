@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     "users",
     "teams",
     "projects",
+    "boards",
 ]
 
 MIDDLEWARE = [
@@ -72,7 +73,7 @@ DATABASES = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": env("REDIS_URL", default="redis://localhost:6379/1"),
+        "LOCATION": env("REDIS_URL", default="redis://redis:6379/1"),
         "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
     }
 }
@@ -140,8 +141,13 @@ EMAIL_BACKEND = env(
 )
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="no-reply@kanban.local")
 
-CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://localhost:6379/0")
-CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://localhost:6379/0")
+CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://redis:6379/0")
+CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://redis:6379/0")
 CELERY_TASK_SERIALIZER = "json"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_BEAT_SCHEDULE = {}
+
+# During tests and local development we want Celery tasks to run synchronously to
+# avoid requiring a running Redis/Celery worker in CI or dev mode. You can override
+# this by setting CELERY_TASK_ALWAYS_EAGER=False explicitly in your .env for production.
+CELERY_TASK_ALWAYS_EAGER = env("CELERY_TASK_ALWAYS_EAGER", default=DEBUG)

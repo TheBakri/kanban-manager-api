@@ -31,4 +31,4 @@ def update_user_profile(user: User, **validated_data: Any) -> User:
         replace_user_avatar(user, avatar)
     user.save()
     return user
-*** End of File
+
