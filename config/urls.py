@@ -30,6 +30,7 @@ urlpatterns = [
     ),
     path("api/v1/users/", include("users.urls")),
     path("api/v1/teams/", include("teams.urls")),
+    path("api/v1/projects/", include("projects.urls")),
 ]
 
 if settings.DEBUG:

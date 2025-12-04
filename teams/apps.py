@@ -6,4 +6,4 @@ class TeamsConfig(AppConfig):
     name = "teams"
 
     def ready(self):
-        from . import signals  # noqa: WPS433,F401
+        from . import signals 
