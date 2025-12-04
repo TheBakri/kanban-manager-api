@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "tasks",
     "comments",
     "activity",
+    "notifications",
 ]
 
 MIDDLEWARE = [

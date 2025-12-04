@@ -34,7 +34,8 @@ urlpatterns = [
     path("api/v1/boards/", include("boards.urls")),
     path("api/v1/tasks/", include("tasks.urls")),
     path("api/v1/comments/", include("comments.urls")),
-    path("api/v1/activity/", include("activity.urls")),
+        path("api/v1/notifications/", include("notifications.urls")),
+        path("api/v1/activity/", include("activity.urls")),
 ]
 
 if settings.DEBUG:
