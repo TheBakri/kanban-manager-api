@@ -16,7 +16,11 @@ from .serializers import (
 
 class RegisterView(generics.CreateAPIView):
 	serializer_class = RegisterSerializer
+	# Allow unauthenticated users to register. Also explicitly disable
+	# authentication for this endpoint so the request won't fail if the
+	# client sends an invalid/expired Authorization header.
 	permission_classes = (permissions.AllowAny,)
+	authentication_classes = []
 
 	def create(self, request, *args, **kwargs):
 		serializer = self.get_serializer(data=request.data)
