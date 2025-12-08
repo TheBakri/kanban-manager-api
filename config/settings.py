@@ -276,7 +276,11 @@ CSRF_COOKIE_SECURE = env.bool("CSRF_COOKIE_SECURE", default=not DEBUG)
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
-SECURE_REFERRER_POLICY = "no-referrer"
+# For development we prefer a permissive referrer policy so the browser
+# will send a Referer header that Django can use as a fallback in CSRF
+# validation when Origin isn't present. In production, a restrictive
+# policy (like no-referrer) is safer.
+SECURE_REFERRER_POLICY = "no-referrer-when-downgrade" if DEBUG else "no-referrer"
 SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=not DEBUG)
 SECURE_HSTS_SECONDS = env.int("SECURE_HSTS_SECONDS", default=31536000 if not DEBUG else 0)
 SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool("SECURE_HSTS_INCLUDE_SUBDOMAINS", default=True)
