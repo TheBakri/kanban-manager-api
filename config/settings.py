@@ -1,24 +1,66 @@
 from datetime import timedelta
 from pathlib import Path
 from django.core.exceptions import ImproperlyConfigured
+import os
 
-import environ
+try:
+    import environ
+    HAS_ENVIRON = True
+except Exception:  # pragma: no cover - package not installed
+    environ = None
+    HAS_ENVIRON = False
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-env = environ.Env(
-    DEBUG=(bool, True),
-)
-ENV_FILE = BASE_DIR / ".env"
-if ENV_FILE.exists():
-    env.read_env(ENV_FILE)
+if HAS_ENVIRON:
+    env = environ.Env(
+        DEBUG=(bool, True),
+    )
+    ENV_FILE = BASE_DIR / ".env"
+    if ENV_FILE.exists():
+        env.read_env(ENV_FILE)
+else:
+    # Minimal fallback implementation so settings can evaluate values
+    # without django-environ. Uses os.environ directly and provides a
+    # subset of the Env API used in this settings file.
+    class DummyEnv:
+        def __call__(self, key, default=None):
+            return os.environ.get(key, default)
+
+        def bool(self, key, default=False):
+            val = os.environ.get(key)
+            if val is None:
+                return default
+            return str(val).lower() in ("1", "true", "yes")
+
+        def list(self, key, default=None):
+            val = os.environ.get(key)
+            if val is None:
+                return default or []
+            return [p.strip() for p in val.split(",") if p.strip()]
+
+        def str(self, key, default=None):
+            return os.environ.get(key, default)
+
+        def int(self, key, default=0):
+            val = os.environ.get(key)
+            if val is None:
+                return default
+            try:
+                return int(val)
+            except Exception:
+                return default
+
+        def db(self, key, default=None):
+            # Return raw DATABASE_URL string; DATABASES fallback used below.
+            return os.environ.get(key, default)
+
+    env = DummyEnv()
 
 SECRET_KEY = env("SECRET_KEY", default="change-me")
 DEBUG = env.bool("DEBUG", default=True)
 
-# By default don't allow all hosts unless explicitly configured via env. In
-# development we keep the default simple (localhost) while production must
-# explicitly configure ALLOWED_HOSTS in the environment.
+
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost"] if DEBUG else [])
 
 INSTALLED_APPS = [
@@ -77,9 +119,48 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-DATABASES = {
-    "default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
-}
+if HAS_ENVIRON:
+    DATABASES = {
+        "default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
+    }
+else:
+
+    db_url = env.db("DATABASE_URL", default=None)
+    if db_url:
+
+        from urllib.parse import urlparse
+
+        parsed = urlparse(db_url)
+        db_name = parsed.path[1:] if parsed.path else ""
+        db_user = parsed.username
+        db_pass = parsed.password
+        db_host = parsed.hostname
+        db_port = parsed.port
+        scheme = parsed.scheme
+        if scheme.startswith("postgres"):
+            engine = "django.db.backends.postgresql"
+        elif scheme.startswith("mysql"):
+            engine = "django.db.backends.mysql"
+        else:
+            engine = "django.db.backends.sqlite3"
+
+        DATABASES = {
+            "default": {
+                "ENGINE": engine,
+                "NAME": db_name,
+                "USER": db_user,
+                "PASSWORD": db_pass,
+                "HOST": db_host,
+                "PORT": db_port,
+            }
+        }
+    else:
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.sqlite3",
+                "NAME": str(BASE_DIR / "db.sqlite3"),
+            }
+        }
 
 CACHES = {
     "default": {
@@ -129,16 +210,13 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 25,
 }
 
-# Rate limiting (throttling) - these are defaults; they can be tuned via the
-# environment variables. Scoped throttles can be added per-view if needed.
+
 REST_FRAMEWORK.update({
     "DEFAULT_THROTTLE_CLASSES": (
         "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.UserRateThrottle",
     ),
     "DEFAULT_THROTTLE_RATES": {
-        # Default values; set env var THROTTLE_ANON_PER_MIN or THROTTLE_USER_PER_MIN
-        # to override.
         "anon": env.str("THROTTLE_ANON_PER_MIN", default="10/min"),
         "user": env.str("THROTTLE_USER_PER_MIN", default="100/min"),
     },
@@ -163,18 +241,19 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "Kanban Manager API",
     "DESCRIPTION": "API documentation for all backend modules",
     "VERSION": "1.0.0",
-    # If you want to control who can view the schema, set SERVE_PERMISSIONS accordingly (e.g. AllowAny or IsAuthenticated)
     "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],
-    # Prevent the schema JSON embedding into the UI page; keep API responses separately available.
     "SERVE_INCLUDE_SCHEMA": False,
-    # Split request/response components for cleaner schema rendering across components
     "COMPONENT_SPLIT_REQUEST": True,
 }
 
 CORS_ALLOW_ALL_ORIGINS = env.bool("CORS_ALLOW_ALL", default=False)
-# Optional: Set a white-list of allowed origins as comma separated list
-# Example: CORS_ALLOWED_ORIGINS=http://localhost:3000,https://example.com
+
+
 CORS_ALLOWED_ORIGINS = env.list("CORS_ALLOWED_ORIGINS", default=[])
+
+# Trusted origins for CSRF validation (Django 4+ requires scheme + host)
+# Example: CSRF_TRUSTED_ORIGINS = ["http://localhost", "http://127.0.0.1:8000"]
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=["http://localhost"]) 
 
 EMAIL_BACKEND = env(
     "EMAIL_BACKEND",
@@ -188,14 +267,10 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_BEAT_SCHEDULE = {}
 
-# During tests and local development we want Celery tasks to run synchronously to
-# avoid requiring a running Redis/Celery worker in CI or dev mode. You can override
-# this by setting CELERY_TASK_ALWAYS_EAGER=False explicitly in your .env for production.
+
 CELERY_TASK_ALWAYS_EAGER = env("CELERY_TASK_ALWAYS_EAGER", default=DEBUG)
 
-# Security related settings. These should be configured in production where
-# DEBUG=False. They default to secure values but can be overridden via env
-# variables where necessary.
+
 SESSION_COOKIE_SECURE = env.bool("SESSION_COOKIE_SECURE", default=not DEBUG)
 CSRF_COOKIE_SECURE = env.bool("CSRF_COOKIE_SECURE", default=not DEBUG)
 SECURE_BROWSER_XSS_FILTER = True
@@ -207,7 +282,6 @@ SECURE_HSTS_SECONDS = env.int("SECURE_HSTS_SECONDS", default=31536000 if not DEB
 SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool("SECURE_HSTS_INCLUDE_SUBDOMAINS", default=True)
 SECURE_HSTS_PRELOAD = env.bool("SECURE_HSTS_PRELOAD", default=True)
 
-# Validate the SECRET_KEY in production (i.e., when DEBUG is False) to avoid
-# accidental disclosure of a weak default key.
+
 if not DEBUG and SECRET_KEY == "change-me":
     raise ImproperlyConfigured("SECRET_KEY must be set to a secure value in production (via .env)")
