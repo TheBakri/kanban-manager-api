@@ -1,0 +1,7 @@
+{% extends "emails/base.html" %}
+{% block content %}
+<p>Hi {{ user.get_full_name|default:user.email }},</p>
+<p>Welcome to Kanban Manager! We're excited to have you on board.</p>
+<p>You can sign in anytime to manage your projects and tasks.</p>
+<p style="margin-top:24px;">— The Kanban Manager Team</p>
+{% endblock %}

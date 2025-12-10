@@ -1,0 +1,10 @@
+{% extends "emails/base.html" %}
+{% block content %}
+<p>Hi {{ user.get_full_name|default:user.email }},</p>
+<p>You have been assigned to the task <strong>{{ task.title }}</strong>.</p>
+{% if task.due_date %}
+<p>Due date: {{ task.due_date|date:"Y-m-d H:i" }} ({{ task.due_date|timezone }})</p>
+{% endif %}
+<p>You can view the task in Kanban Manager to get started.</p>
+<p style="margin-top:24px;">— The Kanban Manager Team</p>
+{% endblock %}

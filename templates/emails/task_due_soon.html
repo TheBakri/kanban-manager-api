@@ -1,0 +1,8 @@
+{% extends "emails/base.html" %}
+{% block content %}
+<p>Hi {{ user.get_full_name|default:user.email }},</p>
+<p>The task <strong>{{ task.title }}</strong> is due soon.</p>
+<p>Due: {{ due_display|date:"Y-m-d H:i" }} ({{ due_display|timezone }})</p>
+<p>Please review and update the task status if needed.</p>
+<p style="margin-top:24px;">— The Kanban Manager Team</p>
+{% endblock %}
