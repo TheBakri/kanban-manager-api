@@ -42,6 +42,7 @@ def _send_email_via_smtp(
     subject: str,
     body: str,
     html_body: str | None = None,
+    log_extra: dict | None = None,
 ):
     """Send an email over an SMTP connection and return (send_count, noop_code, noop_msg).
 
@@ -58,7 +59,9 @@ def _send_email_via_smtp(
         use_ssl=use_ssl,
         timeout=timeout,
     )
-    logger.info("SMTP connecting", extra={"email_host": host, "email_port": port, "user": username, "recipient": recipient})
+    if log_extra is None:
+        log_extra = {"email_host": host, "email_port": port, "user": username, "recipient": recipient}
+    logger.info("SMTP connecting", extra=log_extra)
     connection.open()
     if getattr(connection, "connection", None) is None:
         raise AssertionError("SMTP connection failed to open")
@@ -74,13 +77,13 @@ def _send_email_via_smtp(
         email.attach_alternative(html_body, "text/html")
 
     send_count = email.send(fail_silently=False)
-    logger.info("SMTP send attempted", extra={"email_host": host, "email_port": port, "user": username, "recipient": recipient, "send_count": send_count})
+    logger.info("SMTP send attempted", extra={**log_extra, "send_count": send_count})
 
     code, msg = connection.connection.noop()
-    logger.info("SMTP NOOP response", extra={"email_host": host, "email_port": port, "user": username, "recipient": recipient, "code": code, "msg": msg})
+    logger.info("SMTP NOOP response", extra={**log_extra, "code": code, "msg": msg})
 
     connection.close()
-    logger.info("SMTP connection closed", extra={"email_host": host, "email_port": port, "user": username, "recipient": recipient})
+    logger.info("SMTP connection closed", extra=log_extra)
     return send_count, code, msg
 
 
@@ -130,6 +133,7 @@ class GmailSmtpDeliveryTests(SimpleTestCase):
                     subject=subject,
                     body=body,
                     html_body=html_body,
+                    log_extra=log_extra,
                 )
                 self.assertEqual(send_count, 1, "Email send did not report success")
                 self.assertEqual(code, 250, f"Expected 250 from Gmail, got {code}: {msg}")
