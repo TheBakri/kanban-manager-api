@@ -1,188 +1,194 @@
-Kanban Manager API
+# Kanban Manager API
 
-A production-ready backend system for managing teams, projects, and tasks using the Kanban methodology.
-This project focuses on real-world backend architecture, async processing, and operational readiness — not just CRUD APIs.
+A **production-ready backend system** for managing teams, projects, and tasks using the Kanban methodology.  
+This project focuses on **real-world backend architecture**, async processing, and operational readiness — not just CRUD APIs.
 
-🚀 Overview
+---
 
-Kanban Manager API is a backend-only service designed to simulate how modern backend systems are built, deployed, and operated in production environments.
+## 🚀 Overview
 
-The project emphasizes:
+Kanban Manager API is a **backend-only service** designed to simulate how modern backend systems are built, deployed, and operated in production environments.
 
-Clean architecture
+The goal of this project is to demonstrate **how backend systems work in real production**, including async jobs, notifications, containerization, and operational concerns.
 
-Async background processing
+---
 
-Environment-based configuration
+## 🧱 Tech Stack
 
-Dockerized workflows
+- **Python**
+- **Django**
+- **Django REST Framework**
+- **PostgreSQL**
+- **Docker & Docker Compose**
+- **Celery**
+- **Redis**
+- **JWT Authentication**
+- **SMTP (Email Notifications)**
+- **Swagger / OpenAPI (drf-spectacular)**
+- **Nginx**
 
-Clear API contracts
+---
 
-🏗️ Tech Stack
+## ✨ Key Features
 
-Python / Django
+- JWT authentication (access & refresh tokens)
+- Team management with ownership & roles
+- Project-based permissions
+- Kanban boards, lists, and tasks
+- Task assignment and due dates
+- Background email notifications
+- Activity tracking per project
+- Async processing using Celery
+- Scheduled jobs using Celery Beat
+- Fully Dockerized architecture
 
-Django REST Framework
+---
 
-PostgreSQL
+## 🔐 Authentication & Security
 
-Docker & Docker Compose
+- JWT-based authentication
+- Token refresh support
+- Permission-based access control
+- Secure production-ready defaults
 
-Celery + Redis
+---
 
-JWT Authentication
+## ⚙️ Architecture Highlights
 
-SMTP (Email notifications)
+- Clean separation of Django apps
+- Background jobs instead of blocking HTTP requests
+- Domain events using signals
+- Environment-based configuration
+- Scalable Docker-based deployment
+- Worker isolation for async processing
 
-Swagger / OpenAPI (drf-spectacular)
+---
 
-✨ Key Features
+## 📄 API Documentation
 
-User authentication (JWT access & refresh tokens)
+Interactive API documentation available via Swagger:
 
-Teams & role-based permissions
+- **Swagger UI**  
+  `http://localhost/api/schema/swagger/`
 
-Projects with members and ownership
+- **OpenAPI Schema**  
+  `http://localhost/api/schema/`
 
-Kanban boards with lists and tasks
 
-Task assignment & due-date tracking
 
-Asynchronous notifications (email & in-app)
+Each module is grouped clearly inside the API:
 
-Activity logging across projects
+- `/users/` → authentication, profiles
+- `/teams/` → team management & members
+- `/projects/` → project ownership & access
+- `/boards/` → kanban boards
+- `/lists/` → board columns
+- `/tasks/` → task lifecycle & ordering
+- `/comments/` → task discussions
+- `/activity/` → project activity logs
+- `/notifications/` → system notifications
 
-Background jobs & scheduled tasks (Celery Beat)
+This structure makes the API easy to consume, extend, and version over time.
 
-Fully dockerized environment (web, worker, beat, db, redis, nginx)
+---
 
-🔐 Authentication
+## 🧠 Design Decisions (Why This Architecture)
 
-JWT-based authentication
+This project was intentionally designed to reflect **how senior backend engineers structure systems**, not just how to “make endpoints work”.
 
-Token rotation & blacklist support
+Key decisions:
 
-Secure production defaults
+- **Async-first mindset**  
+  Emails and notifications are handled by Celery workers, not HTTP requests.
 
-Throttling & permission enforcement
+- **Service isolation**  
+  Web app, workers, scheduler, database, cache, and reverse proxy all run in separate containers.
 
-⚙️ Architecture Highlights
+- **Operational readiness**  
+  Environment-based configuration, health checks, and predictable startup order.
 
-Separation of concerns between apps
+- **Clear boundaries**  
+  Each Django app owns its domain logic without leaking responsibilities.
 
-Async processing using Celery instead of blocking HTTP requests
+---
 
-Signals for domain events (task assignment, due dates, activity logging)
+## 🔄 Background Processing (Celery)
 
-Environment-driven configuration (.env)
+The system uses Celery for all time-consuming operations:
 
-Safe database migrations (single migration runner)
+- Sending emails
+- Due-date reminders
+- Task assignment notifications
+- Scheduled scans (Celery Beat)
 
-Production-aware settings (security headers, throttling)
+Why this matters:
+- Faster API responses
+- No blocking requests
+- Better scalability
+- Production-grade behavior
 
-📄 API Documentation
+---
 
-Interactive API documentation is available via Swagger:
+## 🐳 Dockerized Architecture
 
-Swagger UI:
-http://localhost/api/schema/swagger/
+The entire system runs using Docker Compose with the following services:
 
-OpenAPI Schema (JSON):
-http://localhost/api/schema/
+- `web` → Django API
+- `worker` → Celery worker
+- `beat` → Celery scheduler
+- `db` → PostgreSQL
+- `redis` → Message broker
+- `nginx` → Reverse proxy
 
-All endpoints are namespaced under:
+This setup mirrors real production deployments and makes local development predictable.
 
-/api/v1/
+---
 
-🐳 Running Locally (Docker)
-1. Clone the repository
-git clone https://github.com/USERNAME/kanban-manager-api.git
-cd kanban-manager-api
+## 🧪 Testing Philosophy
 
-2. Create environment file
-cp .env.example .env
+Tests focus on **behavior**, not just coverage:
 
+- API correctness
+- Permission enforcement
+- Async task triggering
+- Email logic (mocked, no external dependency)
 
-Edit .env if needed (database, SMTP, secrets).
+All tests run inside Docker to ensure environment consistency.
 
-3. Build & start services
-docker compose build
-docker compose up -d
+---
 
-4. Apply migrations
+## 📌 Project Scope & Purpose
 
-Migrations are applied automatically by the web container at startup.
+This project is intended to:
 
-5. Access services
+- Demonstrate backend engineering skills
+- Show understanding of async systems
+- Reflect real production constraints
+- Serve as a strong portfolio backend
 
-API: http://localhost
+It is **not** a tutorial project and **not** frontend-dependent.
 
-Swagger: http://localhost/api/schema/swagger/
+---
 
-PostgreSQL: exposed internally via Docker
+## 🚧 Future Improvements
 
-Redis: 6379
+Planned enhancements include:
 
-🧪 Testing
+- WebSocket-based real-time updates
+- Metrics & monitoring (Prometheus / Grafana)
+- CI/CD pipeline
+- Object storage integration
+- Rate limiting & throttling
 
-Run the test suite inside Docker:
+---
 
-docker compose exec web python manage.py test -v 2
+## 📬 Contact
 
+If you’re interested in backend architecture, async systems, or production-ready APIs, feel free to reach out.
 
-Tests cover:
+---
 
-Core API flows
+End of file.
 
-Notifications
+All endpoints are versioned under:
 
-Email tasks (SMTP mocked)
-
-Activity logging
-
-Permissions
-
-📬 Email & Notifications
-
-SMTP-based email notifications
-
-Celery-powered async delivery
-
-Email templates (HTML + text)
-
-Safe deduplication for due-date reminders
-
-Debug preview endpoints (development only)
-
-🔒 Security Notes
-
-.env is not committed
-
-Secure defaults enforced when DEBUG=False
-
-JWT refresh token rotation enabled
-
-CORS & throttling configurable via environment variables
-
-📌 Project Status
-
-✅ Core backend features implemented
-✅ Docker & async processing ready
-✅ API fully documented
-✅ Suitable as a backend portfolio project
-
-Future improvements:
-
-WebSocket / real-time updates
-
-File storage (S3-compatible)
-
-CI/CD pipeline
-
-Metrics & monitoring (Prometheus / Sentry)
-
-👤 Author
-
-Backend Engineer
-Focused on Django, scalable APIs, and production-ready systems.
